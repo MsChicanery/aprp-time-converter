@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RP Time System</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 10vh; }
+    h1 { font-size: 2em; }
+    .big { font-size: 1.6em; margin: 20px; }
+    input, button { font-size: 1em; padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>APRP Time Information</h1>
+
+<div class="big">
+  <strong>Current RP Time:</strong><br>
+  <span id="rpNow"></span>
+</div>
+
+<hr style="width:60%; margin:30px auto;">
+
+<h2>Convert IRL → RP</h2>
+
+<input type="datetime-local" id="irlInput">
+<button onclick="convertTime()">Convert</button>
+
+<div class="big" id="convertedRP"></div>
+
+<script>
+// Anchors
+const anchorIRL = new Date("2026-02-11T01:00:00-05:00");
+const anchorRP = new Date("2003-05-01T00:00:00");
+
+const RP_MINUTES_PER_IRL_MINUTE = 36;
+
+function irlToRP(dateObj) {
+  const diffMinutes = (dateObj - anchorIRL) / 60000;
+  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE;
+  return new Date(anchorRP.getTime() + rpMinutesPassed * 60000);
+}
+
+// Live clock
+function updateClock() {
+  const now = new Date();
+  const rpNow = irlToRP(now);
+  document.getElementById("rpNow").innerText = rpNow.toLocaleString();
+}
+
+setInterval(updateClock, 100);
+updateClock();
+
+// Manual converter
+function convertTime() {
+  const input = document.getElementById("irlInput").value;
+  if (!input) return;
+
+  const irlDate = new Date(input);
+  const rpDate = irlToRP(irlDate);
+
+  document.getElementById("convertedRP").innerText =
+    "RP Time: " + rpDate.toLocaleString();
+}
+</script>
+
+</body>
+</html>
