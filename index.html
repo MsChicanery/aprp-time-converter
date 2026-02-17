@@ -35,35 +35,60 @@
 </div>
 
 <script>
-const anchorIRL = new Date("2026-02-17T17:54:00-05:00"); // IRL anchor
-const anchorRP = { year: 2004, month: 1, day: 4, fraction: 0.5611 }; // RP anchor
+/* ======= APRP Time System ======= */
 
+// IRL anchor: the real-world date/time corresponding to the RP anchor
+const anchorIRL = new Date("2026-02-11T21:00:00-05:00");
+
+// RP anchor: the RP calendar date and fraction of day for the anchor
+const anchorRP = { year: 2004, month: 1, day: 4, fraction: 0.7056 }; 
+// fraction = fraction of the day past midnight (e.g., 0.7056 ≈ 16:56 or 4:56 PM)
+
+// How many RP minutes pass per IRL minute
 const RP_MINUTES_PER_IRL_MINUTE = 36;
 
+/**
+ * Converts an IRL Date to RP Date
+ */
 function irlToRP(dateObj) {
-  // Calculate difference in IRL minutes
+  // Difference in IRL minutes
   const diffMinutes = (dateObj - anchorIRL) / 60000;
-  // RP minutes passed
+
+  // RP minutes that have passed
   const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE;
 
-  // Calculate total RP seconds
-  let totalSeconds = rpMinutesPassed * 60;
+  // Total RP seconds
+  const totalSeconds = rpMinutesPassed * 60;
 
-  // Add to RP anchor
-  let date = new Date(anchorRP.year, anchorRP.month - 1, anchorRP.day);
-  date = new Date(date.getTime() + totalSeconds * 1000); // apply seconds correctly
-  return date;
+  // Create RP anchor date at midnight
+  let rpDate = new Date(anchorRP.year, anchorRP.month - 1, anchorRP.day);
+
+  // Add the fraction of the day in milliseconds
+  const fractionMs = anchorRP.fraction * 24 * 60 * 60 * 1000;
+  rpDate = new Date(rpDate.getTime() + fractionMs);
+
+  // Add the elapsed RP seconds
+  rpDate = new Date(rpDate.getTime() + totalSeconds * 1000);
+
+  return rpDate;
 }
 
+/**
+ * Updates the live RP clock
+ */
 function updateClock() {
   const now = new Date();
   const rpNow = irlToRP(now);
   document.getElementById("rpNow").innerText = rpNow.toLocaleString();
 }
 
+// Update every second
 setInterval(updateClock, 1000);
 updateClock();
 
+/**
+ * Converts a user-input IRL datetime to RP time
+ */
 function convertTime() {
   const input = document.getElementById("irlInput").value;
   if (!input) return;
@@ -75,7 +100,6 @@ function convertTime() {
     "RP Time: " + rpDate.toLocaleString();
 }
 </script>
-
 
 </body>
 </html>
