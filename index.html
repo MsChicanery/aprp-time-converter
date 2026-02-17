@@ -27,41 +27,57 @@
 
 <div class="big" id="convertedRP"></div>
 
-  <hr style="width:60%; margin:30px auto;">
-  
-  <div class="big">
-    <strong>Made by Ameilka Sulewska <3 </strong><br>
-    <strong>
-  <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
-</strong>
+<hr style="width:60%; margin:30px auto;">
 
-  </div>
+<div class="big">
+  <strong>Made by Ameilka Sulewska <3 </strong><br>
+  <strong>
+    <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
+  </strong>
+</div>
 
 <script>
-// Anchors
+// --- Anchors ---
 const anchorIRL = new Date("2026-02-11T21:00:00-05:00"); // 9:00 PM EST
 const anchorRP  = new Date("2003-06-01T00:00:00");       // June 1, 2003 at 12:00 AM
-
-  
 const RP_MINUTES_PER_IRL_MINUTE = 36;
 
+// --- Convert IRL to RP ---
 function irlToRP(dateObj) {
-  const diffMinutes = (dateObj - anchorIRL) / 60000;
-  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE;
+  const diffMinutes = (dateObj - anchorIRL) / 60000;         // IRL minutes passed
+  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE; 
   return new Date(anchorRP.getTime() + rpMinutesPassed * 60000);
 }
 
-// Live clock
+// --- Format RP time nicely ---
+function formatRP(dateObj) {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const dayName = days[dateObj.getDay()];
+  const monthName = months[dateObj.getMonth()];
+  const dayNum = dateObj.getDate();
+  const year = dateObj.getFullYear();
+
+  let hours = dateObj.getHours();
+  const minutes = dateObj.getMinutes().toString().padStart(2,'0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 => 12
+
+  return `${dayName}, ${monthName} ${dayNum}, ${year} at ${hours}:${minutes} ${ampm}`;
+}
+
+// --- Live clock ---
 function updateClock() {
   const now = new Date();
   const rpNow = irlToRP(now);
-  document.getElementById("rpNow").innerText = rpNow.toLocaleString();
+  document.getElementById("rpNow").innerText = formatRP(rpNow);
 }
-
-setInterval(updateClock, 100);
+setInterval(updateClock, 1000);
 updateClock();
 
-// Manual converter
+// --- Manual converter ---
 function convertTime() {
   const input = document.getElementById("irlInput").value;
   if (!input) return;
@@ -70,7 +86,7 @@ function convertTime() {
   const rpDate = irlToRP(irlDate);
 
   document.getElementById("convertedRP").innerText =
-    "RP Time: " + rpDate.toLocaleString();
+    "RP Time: " + formatRP(rpDate);
 }
 </script>
 
