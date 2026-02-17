@@ -37,99 +37,119 @@
 </div>
 
 <script>
-// --- Bot-style RP Time Configuration ---
-const startRP = { year: 2002, month: 9, day: 30, hour: 18, minute: 0, second: 0 }; // From bot example
-const monthsPerDay = 1.20; // Speed from bot / Zuki Time
+// Configuration
+const START_RP = {
+  year: 2002,
+  month: 9,   // September
+  day: 30,
+  hour: 18,
+  minute: 0,
+  second: 0
+};
 
-// --- Convert IRL → RP like bot ---
-function irlToRP(dateObj) {
-  const irlUTC = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
+const MONTHS_PER_IRL_DAY = 1.20;   // ← your acceleration rate
 
-  // Start date as JS Date
-  const startDate = new Date(Date.UTC(
-    startRP.year,
-    startRP.month - 1,
-    startRP.day,
-    startRP.hour,
-    startRP.minute,
-    startRP.second
-  ));
-
-  // Days difference
-  const msDiff = irlUTC - startDate;
-  const daysDiff = msDiff / (1000 * 60 * 60 * 24);
-
-  // Total RP months passed
-  const totalMonths = daysDiff * monthsPerDay;
-
-  // Separate whole months and fractional months
-  const wholeMonths = Math.floor(totalMonths);
-  const fracMonths = totalMonths - wholeMonths;
-
-  // Add whole months
-  let rpYear = startRP.year;
-  let rpMonth = startRP.month - 1 + wholeMonths; // 0-indexed
-  rpYear += Math.floor(rpMonth / 12);
-  rpMonth = rpMonth % 12;
-
-  // Fractional month -> days
-  const daysInMonth = new Date(Date.UTC(rpYear, rpMonth + 1, 0)).getUTCDate();
-  let rpDay = startRP.day + Math.floor(daysInMonth * fracMonths);
-
-  // Adjust for month overflow
-  while (rpDay > daysInMonth) {
-    rpDay -= daysInMonth;
-    rpMonth += 1;
-    if (rpMonth > 11) {
-      rpMonth = 0;
-      rpYear += 1;
-    }
-  }
-
-  // Fractional day -> hours/minutes/seconds
-  const fractionalDay = (daysInMonth * fracMonths) - Math.floor(daysInMonth * fracMonths);
-  const rpHour = Math.floor(fractionalDay * 24);
-  const rpMinute = Math.floor((fractionalDay * 24 * 60) % 60);
-  const rpSecond = Math.floor((fractionalDay * 24 * 3600) % 60);
-
-  return new Date(Date.UTC(rpYear, rpMonth, rpDay, rpHour, rpMinute, rpSecond));
+// Helper: create UTC Date from components
+function makeUTCDate(y, m, d, hh = 0, mm = 0, ss = 0) {
+  return new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
 }
 
-// --- Format RP time nicely ---
-function formatRP(dateObj) {
+function irlToRP(irlDate) {
+  const irlUTC = new Date(irlDate.getTime() + irlDate.getTimezoneOffset() * 60000);
+  const start = makeUTCDate(
+    START_RP.year,
+    START_RP.month,
+    START_RP.day,
+    START_RP.hour,
+    START_RP.minute,
+    START_RP.second
+  );
+
+  const msDiff = irlUTC - start;
+  if (msDiff < 0) return start; // before start → return start time
+
+  const daysPassed = msDiff / (86400 * 1000);
+  const totalRPMonths = daysPassed * MONTHS_PER_IRL_DAY;
+
+  let months = Math.floor(totalRPMonths);
+  let fracMonth = totalRPMonths - months;
+
+  // Add whole months
+  let rpYear  = START_RP.year;
+  let rpMonth = START_RP.month; // 1–12
+
+  months += (rpMonth - 1);           // now months since Jan year 0-ish
+  rpYear  += Math.floor(months / 12);
+  rpMonth  = (months % 12) + 1;      // back to 1–12
+
+  // Now handle fractional month → days + time
+  const daysInCurrentMonth = new Date(Date.UTC(rpYear, rpMonth, 0)).getUTCDate(); // last day of month
+
+  // Most intuitive: start from day 1, add fraction
+  let extraDays = fracMonth * daysInCurrentMonth;
+  let rpDay = 1 + Math.floor(extraDays);
+  let fracDay = extraDays - Math.floor(extraDays);
+
+  // Carry over days if needed
+  while (rpDay > daysInCurrentMonth) {
+    rpDay -= daysInCurrentMonth;
+    rpMonth++;
+    if (rpMonth > 12) {
+      rpMonth = 1;
+      rpYear++;
+    }
+    // Recalculate days in new month
+    daysInCurrentMonth = new Date(Date.UTC(rpYear, rpMonth, 0)).getUTCDate();
+  }
+
+  // Time portion
+  const secondsInDay = fracDay * 86400;
+  const rpHour   = Math.floor(secondsInDay / 3600);
+  const rpMinute = Math.floor((secondsInDay % 3600) / 60);
+  const rpSecond = Math.floor(secondsInDay % 60);
+
+  return makeUTCDate(rpYear, rpMonth, rpDay, rpHour, rpMinute, rpSecond);
+}
+
+function formatRP(date) {
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  const dayName = days[dateObj.getUTCDay()];
-  const monthName = months[dateObj.getUTCMonth()];
-  const dayNum = dateObj.getUTCDate();
-  const year = dateObj.getUTCFullYear();
+  const dayName   = days[date.getUTCDay()];
+  const monthName = months[date.getUTCMonth()];
+  const dayNum    = date.getUTCDate();
+  const year      = date.getUTCFullYear();
 
-  let hours = dateObj.getUTCHours();
-  const minutes = dateObj.getUTCMinutes().toString().padStart(2,'0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
+  let h = date.getUTCHours();
+  const m = date.getUTCMinutes().toString().padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
 
-  return `${dayName}, ${monthName} ${dayNum}, ${year} at ${hours}:${minutes} ${ampm}`;
+  return `${dayName}, ${monthName} ${dayNum}, ${year} at ${h}:${m} ${ampm}`;
 }
 
-// --- Live RP Clock ---
+// Live clock
 function updateClock() {
-  const now = new Date();
-  const rpNow = irlToRP(now);
-  document.getElementById("rpNow").innerText = formatRP(rpNow);
+  const rp = irlToRP(new Date());
+  document.getElementById("rpNow").innerText = formatRP(rp);
 }
+
 setInterval(updateClock, 1000);
 updateClock();
 
-// --- Manual converter ---
+// Manual convert
 function convertTime() {
-  const input = document.getElementById("irlInput").value;
-  if (!input) return;
-  const irlDate = new Date(input);
-  const rpDate = irlToRP(irlDate);
-  document.getElementById("convertedRP").innerText = "RP Time: " + formatRP(rpDate);
+  const val = document.getElementById("irlInput").value;
+  if (!val) return;
+
+  const inputDate = new Date(val);
+  if (isNaN(inputDate)) {
+    document.getElementById("convertedRP").innerText = "Invalid date";
+    return;
+  }
+
+  const rp = irlToRP(inputDate);
+  document.getElementById("convertedRP").innerText = "RP Time: " + formatRP(rp);
 }
 </script>
 
