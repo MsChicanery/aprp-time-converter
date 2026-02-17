@@ -37,18 +37,42 @@
 </div>
 
 <script>
-// --- Anchors in UTC ---
-const anchorIRL = new Date(Date.UTC(2026, 1, 12, 2, 0, 0)); // Feb 11, 2026 21:00 EST = Feb 12 02:00 UTC
-const anchorRP  = new Date(Date.UTC(2003, 5, 1, 0, 0, 0));  // June 1, 2003 at 00:00 UTC
-const RP_MINUTES_PER_IRL_MINUTE = 36;
+// --- RP Time Configuration ---
+const startRP = new Date(Date.UTC(2002, 8, 30, 18, 0, 0)); // Sep 30, 2002 18:00 UTC
+const monthsPerDay = 1.20; // RP months per IRL day
 
-// --- Convert IRL to RP ---
+// --- Helper: Add fractional months ---
+function addMonths(date, months) {
+  let y = date.getUTCFullYear();
+  let m = date.getUTCMonth();
+  let d = date.getUTCDate();
+  let h = date.getUTCHours();
+  let min = date.getUTCMinutes();
+  let sec = date.getUTCSeconds();
+
+  const totalMonths = m + months;
+  const newMonth = Math.floor(totalMonths % 12);
+  const yearsToAdd = Math.floor(totalMonths / 12);
+  const monthFraction = totalMonths - Math.floor(totalMonths);
+
+  y += yearsToAdd;
+  m = newMonth;
+
+  // Approximate days for fraction
+  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  d += Math.floor(daysInMonth * monthFraction);
+
+  return new Date(Date.UTC(y, m, d, h, min, sec));
+}
+
+// --- Convert IRL → RP ---
 function irlToRP(dateObj) {
-  // Convert local time input to UTC
   const irlUTC = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
-  const diffMinutes = (irlUTC - anchorIRL) / 60000;         
-  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE; 
-  return new Date(anchorRP.getTime() + rpMinutesPassed * 60000);
+  const msDiff = irlUTC - startRP; // milliseconds elapsed
+  const daysDiff = msDiff / (1000 * 60 * 60 * 24);
+  const rpMonthsPassed = daysDiff * monthsPerDay;
+
+  return addMonths(startRP, rpMonthsPassed);
 }
 
 // --- Format RP time nicely ---
@@ -65,12 +89,12 @@ function formatRP(dateObj) {
   const minutes = dateObj.getUTCMinutes().toString().padStart(2,'0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours ? hours : 12; // 0 => 12
+  hours = hours ? hours : 12;
 
   return `${dayName}, ${monthName} ${dayNum}, ${year} at ${hours}:${minutes} ${ampm}`;
 }
 
-// --- Live clock ---
+// --- Live RP Clock ---
 function updateClock() {
   const now = new Date();
   const rpNow = irlToRP(now);
