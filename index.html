@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>RP Time System</title>
+  <title>APRP RP Time System</title>
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 10vh; }
     h1 { font-size: 2em; }
@@ -37,42 +37,62 @@
 </div>
 
 <script>
-// --- RP Time Configuration ---
-const startRP = new Date(Date.UTC(2002, 8, 30, 18, 0, 0)); // Sep 30, 2002 18:00 UTC
-const monthsPerDay = 1.20; // RP months per IRL day
+// --- Bot-style RP Time Configuration ---
+const startRP = { year: 2002, month: 9, day: 30, hour: 18, minute: 0, second: 0 }; // From bot example
+const monthsPerDay = 1.20; // Speed from bot / Zuki Time
 
-// --- Helper: Add fractional months ---
-function addMonths(date, months) {
-  let y = date.getUTCFullYear();
-  let m = date.getUTCMonth();
-  let d = date.getUTCDate();
-  let h = date.getUTCHours();
-  let min = date.getUTCMinutes();
-  let sec = date.getUTCSeconds();
-
-  const totalMonths = m + months;
-  const newMonth = Math.floor(totalMonths % 12);
-  const yearsToAdd = Math.floor(totalMonths / 12);
-  const monthFraction = totalMonths - Math.floor(totalMonths);
-
-  y += yearsToAdd;
-  m = newMonth;
-
-  // Approximate days for fraction
-  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  d += Math.floor(daysInMonth * monthFraction);
-
-  return new Date(Date.UTC(y, m, d, h, min, sec));
-}
-
-// --- Convert IRL → RP ---
+// --- Convert IRL → RP like bot ---
 function irlToRP(dateObj) {
   const irlUTC = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
-  const msDiff = irlUTC - startRP; // milliseconds elapsed
-  const daysDiff = msDiff / (1000 * 60 * 60 * 24);
-  const rpMonthsPassed = daysDiff * monthsPerDay;
 
-  return addMonths(startRP, rpMonthsPassed);
+  // Start date as JS Date
+  const startDate = new Date(Date.UTC(
+    startRP.year,
+    startRP.month - 1,
+    startRP.day,
+    startRP.hour,
+    startRP.minute,
+    startRP.second
+  ));
+
+  // Days difference
+  const msDiff = irlUTC - startDate;
+  const daysDiff = msDiff / (1000 * 60 * 60 * 24);
+
+  // Total RP months passed
+  const totalMonths = daysDiff * monthsPerDay;
+
+  // Separate whole months and fractional months
+  const wholeMonths = Math.floor(totalMonths);
+  const fracMonths = totalMonths - wholeMonths;
+
+  // Add whole months
+  let rpYear = startRP.year;
+  let rpMonth = startRP.month - 1 + wholeMonths; // 0-indexed
+  rpYear += Math.floor(rpMonth / 12);
+  rpMonth = rpMonth % 12;
+
+  // Fractional month -> days
+  const daysInMonth = new Date(Date.UTC(rpYear, rpMonth + 1, 0)).getUTCDate();
+  let rpDay = startRP.day + Math.floor(daysInMonth * fracMonths);
+
+  // Adjust for month overflow
+  while (rpDay > daysInMonth) {
+    rpDay -= daysInMonth;
+    rpMonth += 1;
+    if (rpMonth > 11) {
+      rpMonth = 0;
+      rpYear += 1;
+    }
+  }
+
+  // Fractional day -> hours/minutes/seconds
+  const fractionalDay = (daysInMonth * fracMonths) - Math.floor(daysInMonth * fracMonths);
+  const rpHour = Math.floor(fractionalDay * 24);
+  const rpMinute = Math.floor((fractionalDay * 24 * 60) % 60);
+  const rpSecond = Math.floor((fractionalDay * 24 * 3600) % 60);
+
+  return new Date(Date.UTC(rpYear, rpMonth, rpDay, rpHour, rpMinute, rpSecond));
 }
 
 // --- Format RP time nicely ---
@@ -107,12 +127,9 @@ updateClock();
 function convertTime() {
   const input = document.getElementById("irlInput").value;
   if (!input) return;
-
   const irlDate = new Date(input);
   const rpDate = irlToRP(irlDate);
-
-  document.getElementById("convertedRP").innerText =
-    "RP Time: " + formatRP(rpDate);
+  document.getElementById("convertedRP").innerText = "RP Time: " + formatRP(rpDate);
 }
 </script>
 
