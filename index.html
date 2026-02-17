@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>APRP RP Time System</title>
+  <title>APRP Time System</title>
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 10vh; }
     h1 { font-size: 2em; }
@@ -31,125 +31,70 @@
 
 <div class="big">
   <strong>Made by Ameilka Sulewska <3 </strong><br>
-  <strong>
-    <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
-  </strong>
+  <strong><a href="https://discord.gg/mockgov">Join the APRP Discord</a></strong>
 </div>
 
 <script>
-// Configuration
-const START_RP = {
-  year: 2002,
-  month: 9,   // September
-  day: 30,
-  hour: 18,
-  minute: 0,
-  second: 0
-};
+/* ---------- RP Time System Configuration ---------- */
 
-const MONTHS_PER_IRL_DAY = 1.20;   // ← your acceleration rate
+// Anchor points (similar to your Python bot)
+const anchorIRL = new Date("2026-02-11T21:00:00-05:00"); // IRL anchor
+const anchorRP  = { year: 2003, month: 6, day: 1, fraction: 0 }; // RP anchor
 
-// Helper: create UTC Date from components
-function makeUTCDate(y, m, d, hh = 0, mm = 0, ss = 0) {
-  return new Date(Date.UTC(y, m - 1, d, hh, mm, ss));
+// RP speed: seconds per IRL minute (from your bot's magic constant)
+const RP_SECONDS_PER_IRL_SECOND = 36; // Each IRL second = 36 RP seconds (same as JS constant 36x)
+
+/* ---------- Helper Functions ---------- */
+
+function addRPFractionToDate(rpAnchor, rpMinutes) {
+  // Convert RP minutes to total seconds
+  let totalSeconds = rpMinutes * 60;
+
+  // Calculate days, hours, minutes, seconds
+  let days = Math.floor(totalSeconds / 86400);
+  totalSeconds -= days * 86400;
+
+  let hours = Math.floor(totalSeconds / 3600);
+  totalSeconds -= hours * 3600;
+
+  let minutes = Math.floor(totalSeconds / 60);
+  let seconds = Math.floor(totalSeconds - minutes * 60);
+
+  let date = new Date(rpAnchor.year, rpAnchor.month - 1, rpAnchor.day);
+  date.setDate(date.getDate() + days);
+  date.setHours(hours, minutes, seconds);
+
+  return date;
 }
 
-function irlToRP(irlDate) {
-  const irlUTC = new Date(irlDate.getTime() + irlDate.getTimezoneOffset() * 60000);
-  const start = makeUTCDate(
-    START_RP.year,
-    START_RP.month,
-    START_RP.day,
-    START_RP.hour,
-    START_RP.minute,
-    START_RP.second
-  );
-
-  const msDiff = irlUTC - start;
-  if (msDiff < 0) return start; // before start → return start time
-
-  const daysPassed = msDiff / (86400 * 1000);
-  const totalRPMonths = daysPassed * MONTHS_PER_IRL_DAY;
-
-  let months = Math.floor(totalRPMonths);
-  let fracMonth = totalRPMonths - months;
-
-  // Add whole months
-  let rpYear  = START_RP.year;
-  let rpMonth = START_RP.month; // 1–12
-
-  months += (rpMonth - 1);           // now months since Jan year 0-ish
-  rpYear  += Math.floor(months / 12);
-  rpMonth  = (months % 12) + 1;      // back to 1–12
-
-  // Now handle fractional month → days + time
-  const daysInCurrentMonth = new Date(Date.UTC(rpYear, rpMonth, 0)).getUTCDate(); // last day of month
-
-  // Most intuitive: start from day 1, add fraction
-  let extraDays = fracMonth * daysInCurrentMonth;
-  let rpDay = 1 + Math.floor(extraDays);
-  let fracDay = extraDays - Math.floor(extraDays);
-
-  // Carry over days if needed
-  while (rpDay > daysInCurrentMonth) {
-    rpDay -= daysInCurrentMonth;
-    rpMonth++;
-    if (rpMonth > 12) {
-      rpMonth = 1;
-      rpYear++;
-    }
-    // Recalculate days in new month
-    daysInCurrentMonth = new Date(Date.UTC(rpYear, rpMonth, 0)).getUTCDate();
-  }
-
-  // Time portion
-  const secondsInDay = fracDay * 86400;
-  const rpHour   = Math.floor(secondsInDay / 3600);
-  const rpMinute = Math.floor((secondsInDay % 3600) / 60);
-  const rpSecond = Math.floor(secondsInDay % 60);
-
-  return makeUTCDate(rpYear, rpMonth, rpDay, rpHour, rpMinute, rpSecond);
+function irlToRP(dateObj) {
+  // Calculate IRL diff in minutes
+  const diffMinutes = (dateObj - anchorIRL) / 60000;
+  // RP minutes elapsed
+  const rpMinutesPassed = diffMinutes * RP_SECONDS_PER_IRL_SECOND;
+  return addRPFractionToDate(anchorRP, rpMinutesPassed);
 }
 
-function formatRP(date) {
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+/* ---------- Display Functions ---------- */
 
-  const dayName   = days[date.getUTCDay()];
-  const monthName = months[date.getUTCMonth()];
-  const dayNum    = date.getUTCDate();
-  const year      = date.getUTCFullYear();
-
-  let h = date.getUTCHours();
-  const m = date.getUTCMinutes().toString().padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-
-  return `${dayName}, ${monthName} ${dayNum}, ${year} at ${h}:${m} ${ampm}`;
-}
-
-// Live clock
 function updateClock() {
-  const rp = irlToRP(new Date());
-  document.getElementById("rpNow").innerText = formatRP(rp);
+  const now = new Date();
+  const rpNow = irlToRP(now);
+  document.getElementById("rpNow").innerText = rpNow.toLocaleString();
 }
 
-setInterval(updateClock, 1000);
+setInterval(updateClock, 1000); // update every second
 updateClock();
 
-// Manual convert
 function convertTime() {
-  const val = document.getElementById("irlInput").value;
-  if (!val) return;
+  const input = document.getElementById("irlInput").value;
+  if (!input) return;
 
-  const inputDate = new Date(val);
-  if (isNaN(inputDate)) {
-    document.getElementById("convertedRP").innerText = "Invalid date";
-    return;
-  }
+  const irlDate = new Date(input);
+  const rpDate = irlToRP(irlDate);
 
-  const rp = irlToRP(inputDate);
-  document.getElementById("convertedRP").innerText = "RP Time: " + formatRP(rp);
+  document.getElementById("convertedRP").innerText =
+    "RP Time: " + rpDate.toLocaleString();
 }
 </script>
 
