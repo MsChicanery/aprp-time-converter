@@ -35,47 +35,25 @@
 </div>
 
 <script>
-/* ---------- RP Time System Configuration ---------- */
-
-// Anchor points (similar to your Python bot)
 const anchorIRL = new Date("2026-02-11T21:00:00-05:00"); // IRL anchor
-const anchorRP  = { year: 2003, month: 6, day: 1, fraction: 0 }; // RP anchor
+const anchorRP = { year: 2003, month: 6, day: 1, fraction: 0 }; // RP anchor
 
-// RP speed: seconds per IRL minute (from your bot's magic constant)
-const RP_SECONDS_PER_IRL_SECOND = 36; // Each IRL second = 36 RP seconds (same as JS constant 36x)
-
-/* ---------- Helper Functions ---------- */
-
-function addRPFractionToDate(rpAnchor, rpMinutes) {
-  // Convert RP minutes to total seconds
-  let totalSeconds = rpMinutes * 60;
-
-  // Calculate days, hours, minutes, seconds
-  let days = Math.floor(totalSeconds / 86400);
-  totalSeconds -= days * 86400;
-
-  let hours = Math.floor(totalSeconds / 3600);
-  totalSeconds -= hours * 3600;
-
-  let minutes = Math.floor(totalSeconds / 60);
-  let seconds = Math.floor(totalSeconds - minutes * 60);
-
-  let date = new Date(rpAnchor.year, rpAnchor.month - 1, rpAnchor.day);
-  date.setDate(date.getDate() + days);
-  date.setHours(hours, minutes, seconds);
-
-  return date;
-}
+const RP_MINUTES_PER_IRL_MINUTE = 36;
 
 function irlToRP(dateObj) {
-  // Calculate IRL diff in minutes
+  // Calculate difference in IRL minutes
   const diffMinutes = (dateObj - anchorIRL) / 60000;
-  // RP minutes elapsed
-  const rpMinutesPassed = diffMinutes * RP_SECONDS_PER_IRL_SECOND;
-  return addRPFractionToDate(anchorRP, rpMinutesPassed);
-}
+  // RP minutes passed
+  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE;
 
-/* ---------- Display Functions ---------- */
+  // Calculate total RP seconds
+  let totalSeconds = rpMinutesPassed * 60;
+
+  // Add to RP anchor
+  let date = new Date(anchorRP.year, anchorRP.month - 1, anchorRP.day);
+  date = new Date(date.getTime() + totalSeconds * 1000); // apply seconds correctly
+  return date;
+}
 
 function updateClock() {
   const now = new Date();
@@ -83,7 +61,7 @@ function updateClock() {
   document.getElementById("rpNow").innerText = rpNow.toLocaleString();
 }
 
-setInterval(updateClock, 1000); // update every second
+setInterval(updateClock, 1000);
 updateClock();
 
 function convertTime() {
@@ -97,6 +75,7 @@ function convertTime() {
     "RP Time: " + rpDate.toLocaleString();
 }
 </script>
+
 
 </body>
 </html>
