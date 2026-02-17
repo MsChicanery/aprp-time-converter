@@ -37,14 +37,16 @@
 </div>
 
 <script>
-// --- Anchors ---
-const anchorIRL = new Date("2026-02-11T21:00:00-05:00"); // 9:00 PM EST
-const anchorRP  = new Date("2003-06-01T00:00:00");       // June 1, 2003 at 12:00 AM
+// --- Anchors in UTC ---
+const anchorIRL = new Date(Date.UTC(2026, 1, 12, 2, 0, 0)); // Feb 11, 2026 21:00 EST = Feb 12 02:00 UTC
+const anchorRP  = new Date(Date.UTC(2003, 5, 1, 0, 0, 0));  // June 1, 2003 at 00:00 UTC
 const RP_MINUTES_PER_IRL_MINUTE = 36;
 
 // --- Convert IRL to RP ---
 function irlToRP(dateObj) {
-  const diffMinutes = (dateObj - anchorIRL) / 60000;         // IRL minutes passed
+  // Convert local time input to UTC
+  const irlUTC = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
+  const diffMinutes = (irlUTC - anchorIRL) / 60000;         
   const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE; 
   return new Date(anchorRP.getTime() + rpMinutesPassed * 60000);
 }
@@ -54,13 +56,13 @@ function formatRP(dateObj) {
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  const dayName = days[dateObj.getDay()];
-  const monthName = months[dateObj.getMonth()];
-  const dayNum = dateObj.getDate();
-  const year = dateObj.getFullYear();
+  const dayName = days[dateObj.getUTCDay()];
+  const monthName = months[dateObj.getUTCMonth()];
+  const dayNum = dateObj.getUTCDate();
+  const year = dateObj.getUTCFullYear();
 
-  let hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes().toString().padStart(2,'0');
+  let hours = dateObj.getUTCHours();
+  const minutes = dateObj.getUTCMinutes().toString().padStart(2,'0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
   hours = hours ? hours : 12; // 0 => 12
