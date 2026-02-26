@@ -2,6 +2,12 @@
 <html>
 <head>
   <title>RP Time System</title>
+  
+  <!-- Static Open Graph metadata for Discord -->
+  <meta property="og:title" content="RP Time: 2005-01-20 10:00:00">
+  <meta property="og:description" content="Convert IRL time to APRP RP time. Live RP clock and manual converter.">
+  <meta property="og:type" content="website">
+  
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 10vh; }
     h1 { font-size: 2em; }
@@ -27,21 +33,19 @@
 
 <div class="big" id="convertedRP"></div>
 
-  <hr style="width:60%; margin:30px auto;">
-  
-  <div class="big">
-    <strong>Made by Ameilka Sulewska <3 </strong><br>
-    <strong>
-  <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
-</strong>
+<hr style="width:60%; margin:30px auto;">
 
-  </div>
+<div class="big">
+  <strong>Made by Ameilka Sulewska <3 </strong><br>
+  <strong>
+    <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
+  </strong>
+</div>
 
 <script>
 // Anchors
 const anchorIRL = new Date("2026-02-26T17:30:00-05:00");
 const anchorRP  = new Date("2005-01-20T10:00:00");
-  
 const RP_MINUTES_PER_IRL_MINUTE = 36;
 
 function irlToRP(dateObj) {
