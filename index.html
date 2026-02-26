@@ -1,1 +1,77 @@
-<!DOCTYPE html> <html> <head> <title>APRP Time System</title> <style> body { font-family: sans-serif; text-align: center; margin-top: 10vh; } h1 { font-size: 2em; } .big { font-size: 1.6em; margin: 20px; } input, button { font-size: 1em; padding: 8px; margin: 5px; } </style> </head> <body> <h1>APRP Time Information</h1> <div class="big"> <strong>Current RP Time:</strong><br> <span id="rpNow"></span> </div> <hr style="width:60%; margin:30px auto;"> <h2>Convert IRL → RP</h2> <input type="datetime-local" id="irlInput"> <button onclick="convertTime()">Convert</button> <div class="big" id="convertedRP"></div> <hr style="width:60%; margin:30px auto;"> <div class="big"> <strong>Made by Ameilka Sulewska <3 </strong><br> <strong><a href="https://discord.gg/mockgov">Join the APRP Discord</a></strong> </div> <script> const anchorIRL = new Date("2026-02-11T21:00:00-05:00"); // IRL anchor const anchorRP = { year: 2003, month: 6, day: 1, fraction: 0 }; // RP anchor const RP_MINUTES_PER_IRL_MINUTE = 36; function irlToRP(dateObj) { // Calculate difference in IRL minutes const diffMinutes = (dateObj - anchorIRL) / 60000; // RP minutes passed const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE; // Calculate total RP seconds let totalSeconds = rpMinutesPassed * 60; // Add to RP anchor let date = new Date(anchorRP.year, anchorRP.month - 1, anchorRP.day); date = new Date(date.getTime() + totalSeconds * 1000); // apply seconds correctly return date; } function updateClock() { const now = new Date(); const rpNow = irlToRP(now); document.getElementById("rpNow").innerText = rpNow.toLocaleString(); } setInterval(updateClock, 1000); updateClock(); function convertTime() { const input = document.getElementById("irlInput").value; if (!input) return; const irlDate = new Date(input); const rpDate = irlToRP(irlDate); document.getElementById("convertedRP").innerText = "RP Time: " + rpDate.toLocaleString(); } </script> </body> </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RP Time System</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 10vh; }
+    h1 { font-size: 2em; }
+    .big { font-size: 1.6em; margin: 20px; }
+    input, button { font-size: 1em; padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>APRP Time Information</h1>
+
+<div class="big">
+  <strong>Current RP Time:</strong><br>
+  <span id="rpNow"></span>
+</div>
+
+<hr style="width:60%; margin:30px auto;">
+
+<h2>Convert IRL → RP</h2>
+
+<input type="datetime-local" id="irlInput">
+<button onclick="convertTime()">Convert</button>
+
+<div class="big" id="convertedRP"></div>
+
+  <hr style="width:60%; margin:30px auto;">
+  
+  <div class="big">
+    <strong>Made by Ameilka Sulewska <3 </strong><br>
+    <strong>
+  <a href="https://discord.gg/mockgov">Join the APRP Discord</a>
+</strong>
+
+  </div>
+
+<script>
+// Anchors
+const anchorIRL = new Date("2026-02-26T21:00:00-05:30");
+const anchorRP  = new Date("2005-01-20T00:00:00");
+  
+const RP_MINUTES_PER_IRL_MINUTE = 36;
+
+function irlToRP(dateObj) {
+  const diffMinutes = (dateObj - anchorIRL) / 60000;
+  const rpMinutesPassed = diffMinutes * RP_MINUTES_PER_IRL_MINUTE;
+  return new Date(anchorRP.getTime() + rpMinutesPassed * 60000);
+}
+
+// Live clock
+function updateClock() {
+  const now = new Date();
+  const rpNow = irlToRP(now);
+  document.getElementById("rpNow").innerText = rpNow.toLocaleString();
+}
+
+setInterval(updateClock, 100);
+updateClock();
+
+// Manual converter
+function convertTime() {
+  const input = document.getElementById("irlInput").value;
+  if (!input) return;
+
+  const irlDate = new Date(input);
+  const rpDate = irlToRP(irlDate);
+
+  document.getElementById("convertedRP").innerText =
+    "RP Time: " + rpDate.toLocaleString();
+}
+</script>
+
+</body>
+</html>
